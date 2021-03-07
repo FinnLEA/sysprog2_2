@@ -7,7 +7,7 @@
 
 //-----------------------------------------------
 
-#define TARGET_NAME L"System"
+#define TARGET_NAME L"KmdManager.exe"
 #define TARGET_PID	4
 
 
