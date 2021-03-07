@@ -6,7 +6,7 @@
 
 //-----------------------------------------------
 
-#define TARGET_NAME "System"
+#define TARGET_NAME L"System"
 #define TARGET_PID	4
 
 
@@ -31,6 +31,22 @@ extern ULONG glHandleTableListOffset;
 extern ULONG glImageNameOffset;
 
 //-----------------------------------------------
+
+typedef NTSTATUS(*ZW_QUERY_SYSTEM_INFORMATION) (
+	IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
+	OUT PVOID                   SystemInformation,
+	IN ULONG                    SystemInformationLength,
+	OUT PULONG                  ReturnLength
+	);
+
+NTSTATUS HookZwQuerySystemInformation(
+	IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
+	OUT PVOID                   SystemInformation,
+	IN ULONG                    SystemInformationLength,
+	OUT PULONG                  ReturnLength
+	);
+
+extern ZW_QUERY_SYSTEM_INFORMATION glRealNtQuerySystemInformation;
 
 //-----------------------------------------------
 

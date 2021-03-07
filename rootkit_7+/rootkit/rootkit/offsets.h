@@ -3,7 +3,10 @@
 
 #include "includes.h"
 
-// --------------------------- FOR WINXP
+
+
+#ifdef _M_IX86
+
 
 #if NTDDI_VERSION <= NTDDI_WINXP
 typedef ULONG	HANDLE_T;
@@ -14,6 +17,28 @@ typedef HANDLE		HANDLE_T;
 typedef PEPROCESS	PROCESS_T;
 typedef PETHREAD	PETHREAD_T;
 #endif // DEBUG
+
+//-----------------------------------------------
+
+typedef enum _SYSCALL_INDEXES_ {
+	_ZwQuerySystemInformation_,
+	_ZwDeviceIoControlFile_,
+	_ZwQueryDirectoryFile_,
+	_ZwEnumerateKey_,
+	_LastIndex_
+}SYSCALL_INDEXES;
+
+//-----------------------------------------------
+
+//-----------------------------------------------
+
+// --------------------------- FOR WINXP
+
+
+#define SYSCALL_ZwQuerySystemInformation_WINXP	0x00AD
+#define SYSCALL_ZwDeviceIoControlFile_WINXP		0x0042
+#define SYSCALL_ZwQueryDirectoryFile_WINXP		0x0091
+#define SYSCALL_ZwEnumerateKey_WINXP			0x0047
 
 
 //смещение заголовка очереди потоков в объекте процесса
@@ -45,7 +70,15 @@ typedef PETHREAD	PETHREAD_T;
 // смещение до имени в объекте процесса
 #define IMAGE_NAME_OFFSET_WINXP				0x174
 
+
+
 // --------------------------- FOR WIN7
+
+#define SYSCALL_ZwQuerySystemInformation_WIN7	0x0105
+#define SYSCALL_ZwDeviceIoControlFile_WIN7		0x006B
+#define SYSCALL_ZwQueryDirectoryFile_WIN7		0x00DF
+#define SYSCALL_ZwEnumerateKey_WIN7				0x0074
+
 
 //смещение заголовка очереди потоков в объекте процесса
 #define THREAD_LIST_PROCESS_OFFSET_WIN7      0x188
@@ -76,7 +109,12 @@ typedef PETHREAD	PETHREAD_T;
 // смещение до имени в объекте процесса
 #define IMAGE_NAME_OFFSET_WIN7				0x16c
 
-// --------------------------- FOR WIN8
+// --------------------------- FOR WIN8.1
+
+#define SYSCALL_ZwQuerySystemInformation_WIN8_1	0x0098
+#define SYSCALL_ZwDeviceIoControlFile_WIN8_1	0x0137
+#define SYSCALL_ZwQueryDirectoryFile_WIN8_1		0x00BE
+#define SYSCALL_ZwEnumerateKey_WIN8_1			0x012E
 
 ////смещение заголовка очереди потоков в объекте процесса
 //#define THREAD_LIST_PROCESS_OFFSET_WIN7      0x188
@@ -107,6 +145,14 @@ typedef PETHREAD	PETHREAD_T;
 // смещение до имени в объекте процесса
 //#define IMAGE_NAME_OFFSET_WIN8				0x16c
 
+
+// --------------------------- FOR WIN10_1903
+
+#define SYSCALL_ZwQuerySystemInformation_WIN10_1903	0x009D
+#define SYSCALL_ZwDeviceIoControlFile_WIN10_1903	0x0145	
+#define SYSCALL_ZwQueryDirectoryFile_WIN10_1903		0x00C5
+#define SYSCALL_ZwEnumerateKey_WIN10_1903			0x013C
+
 // --------------------------- 
 
 ULONG glThreadListProcessOffset;
@@ -119,6 +165,7 @@ ULONG glHandleTablePidOffset;
 ULONG glHandleTableProcOffset;
 ULONG glHandleTableListOffset;
 ULONG glImageNameOffset;
+USHORT glSysCallNumbers[_LastIndex_];
 
 // ---------------------------
 
@@ -144,46 +191,44 @@ ULONG glImageNameOffset;
 
 #define GET_HANDLE_TABLE_LIST_ENTRY(handleTable)	(PLIST_ENTRY)((ULONG)handleTable + glHandleTableListOffset)
 
-//*************************************************************
+
+//-----------------------------------------------
 
 // ---------------------------
 #define WINXP_BUILD_NUMBER	2600
 #define WIN7_BUILD_NUMBER	7601
 #define WIN8_BUILD_NUMBER	9200
 
-//#define WINXP
-//#define WIN7
+#define WINXP
+#define WIN7
+#define WIN8_1
+#define WIN10_1903
 
-#define INIT_OFFSETS_WINXP()	 \
-	glActiveListProcessOffset		= ACTIVE_LIST_PROCESS_OFFSET_WINXP; \
-	glThreadListProcessOffset		= THREAD_LIST_PROCESS_OFFSET_WINXP; \
-	glStartAddressThreadOffsett		= START_ADDRESS_THREAD_OFFSET_WINXP; \
-	glThreadListThreadOffset		= THREAD_LIST_THREAD_OFFSET_WINXP; \
-	glWin32StartAddressThreadOffset = WIN32_START_ADDESS_THREAD_OFFSET_WINXP; \
-	glHandleTableOffset				= HANDLE_TABLE_OFFSET_WINXP; \
-	glHandleTableListOffset			= HANDLE_TABLE_LIST_OFFSET_WINXP; \
-	glHandleTablePidOffset			= HANDLE_TABLE_PID_OFFSET_WINXP; \
-	glHandleTableProcOffset			= HANDLE_TABLE_PROC_OFFSET_WINXP; \
-	glImageNameOffset				= IMAGE_NAME_OFFSET_WINXP;
 
-#define INIT_OFFSETS_WIN7()		\
-	glActiveListProcessOffset		= ACTIVE_LIST_PROCESS_OFFSET_WIN7; \
-	glThreadListProcessOffset		= THREAD_LIST_PROCESS_OFFSET_WIN7; \
-	glStartAddressThreadOffsett		= START_ADDRESS_THREAD_OFFSET_WIN7; \
-	glThreadListThreadOffset		= THREAD_LIST_THREAD_OFFSET_WIN7; \
-	glWin32StartAddressThreadOffset = WIN32_START_ADDESS_THREAD_OFFSET_WIN7; \
-	glHandleTableOffset				= HANDLE_TABLE_OFFSET_WIN7; \
-	glHandleTableListOffset			= HANDLE_TABLE_LIST_OFFSET_WIN7; \
-	glHandleTablePidOffset			= HANDLE_TABLE_PID_OFFSET_WIN7; \
-	glHandleTableProcOffset			= HANDLE_TABLE_PROC_OFFSET_WIN7; \
-	glImageNameOffset				= IMAGE_NAME_OFFSET_WIN7;
+#define INIT_VARIABLES(version)	 \
+	glActiveListProcessOffset		= ACTIVE_LIST_PROCESS_OFFSET_##version; \
+	glThreadListProcessOffset		= THREAD_LIST_PROCESS_OFFSET_##version; \
+	glStartAddressThreadOffsett		= START_ADDRESS_THREAD_OFFSET_##version; \
+	glThreadListThreadOffset		= THREAD_LIST_THREAD_OFFSET_##version; \
+	glWin32StartAddressThreadOffset = WIN32_START_ADDESS_THREAD_OFFSET_##version; \
+	glHandleTableOffset				= HANDLE_TABLE_OFFSET_##version; \
+	glHandleTableListOffset			= HANDLE_TABLE_LIST_OFFSET_##version; \
+	glHandleTablePidOffset			= HANDLE_TABLE_PID_OFFSET_##version; \
+	glHandleTableProcOffset			= HANDLE_TABLE_PROC_OFFSET_##version; \
+	glImageNameOffset				= IMAGE_NAME_OFFSET_##version; \
+	glSysCallNumbers[_ZwQuerySystemInformation_]	= SYSCALL_ZwQuerySystemInformation_##version; \
+	glSysCallNumbers[_ZwDeviceIoControlFile_]		= SYSCALL_ZwDeviceIoControlFile_##version; \
+	glSysCallNumbers[_ZwQueryDirectoryFile_]		= SYSCALL_ZwQueryDirectoryFile_##version; \
+	glSysCallNumbers[_ZwEnumerateKey_]				= SYSCALL_ZwEnumerateKey_##version; 
+	
 
-#define INIT_OFFSETS_WIN8()		\
-	glHandleTableOffset				= HANDLE_TABLE_OFFSET_WIN8; \
-	glHandleTableListOffset			= HANDLE_TABLE_LIST_OFFSET_WIN8; \
-	glActiveListProcessOffset		= ACTIVE_LIST_PROCESS_OFFSET_WIN8
 
-// ---------------------------
+//-----------------------------------------------
 
+#else
+// for x64
+#endif // M_X86
+	
+//-----------------------------------------------
 
 #endif

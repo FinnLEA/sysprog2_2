@@ -2,7 +2,7 @@ TARGETNAME=Driver
 TARGETTYPE=DRIVER
 #DRIVERTYPE=WDM
 TARGETPATH=obj
-SOURCES=init.c
+SOURCES=init.c files.c key.c net.c process.c syscalls_work.c
 
 # TARGETLIBS=
 # INCLUDE=

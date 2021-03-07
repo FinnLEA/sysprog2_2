@@ -4,5 +4,6 @@
 #include <ntddk.h>
 
 #include "offsets.h"
+#include "syscalls_work.h"
 
 #endif

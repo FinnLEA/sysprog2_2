@@ -251,28 +251,28 @@
 			Filter=".c;.cpp"
 			>
 			<File
-				RelativePath="init.c"
+				RelativePath=".\files.c"
 				>
-				<FileConfiguration
-					Name="Free|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						ForcedIncludeFiles=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Checked|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						ForcedIncludeFiles=""
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\init.c"
+				>
+			</File>
+			<File
+				RelativePath=".\key.c"
+				>
+			</File>
+			<File
+				RelativePath=".\net.c"
+				>
+			</File>
+			<File
+				RelativePath=".\process.c"
+				>
+			</File>
+			<File
+				RelativePath=".\syscalls_work.c"
+				>
 			</File>
 		</Filter>
 		<Filter
@@ -280,11 +280,31 @@
 			Filter=".h"
 			>
 			<File
+				RelativePath=".\files.h"
+				>
+			</File>
+			<File
 				RelativePath=".\includes.h"
 				>
 			</File>
 			<File
+				RelativePath=".\key.h"
+				>
+			</File>
+			<File
+				RelativePath=".\net.h"
+				>
+			</File>
+			<File
 				RelativePath=".\offsets.h"
+				>
+			</File>
+			<File
+				RelativePath=".\process.h"
+				>
+			</File>
+			<File
+				RelativePath=".\syscalls_work.h"
 				>
 			</File>
 		</Filter>
