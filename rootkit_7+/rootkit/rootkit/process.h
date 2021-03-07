@@ -1,6 +1,7 @@
 #ifndef _PROCESS_H_
 #define _PROCESS_H_
 
+
 #include "includes.h"
 
 
@@ -61,15 +62,15 @@ void DeleteEntryFromList(PLIST_ENTRY TargetEntry);
 void InsertEntryInList(PLIST_ENTRY prevTargetEntry, PLIST_ENTRY TargetEntry);
 
 
-void InfoThread(ULONG process);
-void ShowAllThreadProcess(ULONG start_process);
+void InfoThread(PETHREAD_T process);
+void ShowAllThreadProcess(PEPROCESS_T start_process);
 void InfoProcess(ULONG process);
 void ShowAllProcess(void);
 
 //extern NTSTATUS PsLookupProcessByProcessId (HANDLE ProcessId, PEPROCESS *Process);
 extern char* PsGetProcessImageFileName(ULONG process);
 //extern ULONG PsGetProcessId(ULONG process);
-extern ULONG PsGetThreadProcess(ULONG thread);
+//extern PEPROCESS PsGetThreadProcess(PETHREAD thread);
 //extern ULONG PsGetThreadId(ULONG thread);
 //extern ULONG PsGetThreadProcessId(ULONG thread);
 

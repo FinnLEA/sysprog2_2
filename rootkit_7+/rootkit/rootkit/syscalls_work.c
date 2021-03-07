@@ -2,7 +2,7 @@
 
 
 
-ULONG glHookCount = 0;
+volatile ULONG glHookCount = 0;
 
 
 
@@ -45,7 +45,7 @@ void WriteCR0(ULONG reg) {
 //
 // Ожидает обнуления переменной.
 //
-void WaitVar(ULONG* var) {
+void WaitVar(volatile ULONG* var) {
 
     KEVENT event;
     LARGE_INTEGER time;

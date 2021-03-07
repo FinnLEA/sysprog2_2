@@ -24,7 +24,8 @@ NTSTATUS HookZwQuerySystemInformation(
 	BOOLEAN isFirstProc = TRUE;
 	PWCHAR newNameAddr = NULL;
 
-	++glHookCount;
+	InterlockedAdd(&((LONG)glHookCount), 1);
+
 	retStatus = glRealNtQuerySystemInformation(SystemInformationClass,
 		SystemInformation,
 		SystemInformationLength,
@@ -58,7 +59,7 @@ NTSTATUS HookZwQuerySystemInformation(
 		}
 	}
 
-	--glHookCount;
+	InterlockedAdd(&((LONG)glHookCount), -1);
 
 	return retStatus;
 }
@@ -176,7 +177,7 @@ void InfoProcess(ULONG process){
     name[16] = 0;
 
     // идентификатор процесса
-    pid = PsGetProcessId((PROCESS_T)process);
+    pid = PsGetProcessId((PEPROCESS_T)process);
 
     // выводим информацию
     DbgPrint("Process %p:\n",process);
@@ -187,106 +188,106 @@ void InfoProcess(ULONG process){
 
 //----------------------------------------
 
+////
+//// Отображает информацию о всех процессах в системе.
+//// Обходит двусвязный список процессов.
+////
+//void ShowAllProcess(void){
 //
-// Отображает информацию о всех процессах в системе.
-// Обходит двусвязный список процессов.
+//	LIST_ENTRY *current;
+//	PEPROCESS_T process;
 //
-void ShowAllProcess(void){
-
-	LIST_ENTRY *current;
-	ULONG process;
-
-    // указатель на первый элемент списка процессов
-    current = PsActiveProcessHead->Flink;
-
-    // обходим список, пока не вернёмся к началу
-    do {
-
-        // получаем указатель на очередной процесс
-        process = GET_PROCESS_BY_LIST_ENTRY(current);
-
-        glTotalProcess++;
-
-        // выводим информацию для очередного процесса
-        InfoProcess(process);
-
-        // выводим информацию о всех потоках очередного процесса
-        ShowAllThreadProcess(process);
-
-        // получаем указатель на следующий элемент списка
-        current = current->Flink;
-    }
-
-    while(current != PsActiveProcessHead);
-
-    DbgPrint("\nFind %d process and %d thread\n",glTotalProcess,glTotalThread);
-
-    return;
-}
+//    // указатель на первый элемент списка процессов
+//    current = PsActiveProcessHead->Flink;
+//
+//    // обходим список, пока не вернёмся к началу
+//    do {
+//
+//        // получаем указатель на очередной процесс
+//        process = GET_PROCESS_BY_LIST_ENTRY(current);
+//
+//        glTotalProcess++;
+//
+//        // выводим информацию для очередного процесса
+//        InfoProcess(process);
+//
+//        // выводим информацию о всех потоках очередного процесса
+//        ShowAllThreadProcess(process);
+//
+//        // получаем указатель на следующий элемент списка
+//        current = current->Flink;
+//    }
+//
+//    while(current != PsActiveProcessHead);
+//
+//    DbgPrint("\nFind %d process and %d thread\n",glTotalProcess,glTotalThread);
+//
+//    return;
+//}
 
 //----------------------------------------
 
+////
+//// Выводит минимальную информацию о потоке thread
+////
+//void InfoThread(PETHREAD_T thread){
 //
-// Выводит минимальную информацию о потоке thread
+//	HANDLE_T pid;
+//	HANDLE_T tid;
+//	PEPROCESS_T process;
 //
-void InfoThread(ULONG thread){
-
-	HANDLE_T pid;
-	HANDLE_T tid;
-	ULONG process;
-
-    // получаем указатель на родительский процесс
-    process = PsGetThreadProcess(thread);
-
-    // идентификатор процесса
-    pid = PsGetThreadProcessId((PETHREAD_T)thread);
-
-    // идентификатор потока
-    tid = PsGetThreadId((PETHREAD_T)thread);
-
-    // выводим информацию
-    DbgPrint("\t\tThread %p  %d\n",thread,tid);
-    DbgPrint("\t\tProcess: %p  %d\n", process, pid);
-    DbgPrint("\t\tStart address - %p\n", GET_START_ADDRESS_THREAD(thread));
-    DbgPrint("\t\tWin32 start address - %p\n\n", GET_WIN32_START_ADDRESS_THREAD(thread));
-
-    return;
-}
+//    // получаем указатель на родительский процесс
+//    process = PsGetThreadProcess(thread);
+//
+//    // идентификатор процесса
+//    pid = PsGetThreadProcessId((PETHREAD_T)thread);
+//
+//    // идентификатор потока
+//    tid = PsGetThreadId((PETHREAD_T)thread);
+//
+//    // выводим информацию
+//    DbgPrint("\t\tThread %p  %d\n",thread,tid);
+//    DbgPrint("\t\tProcess: %p  %d\n", process, pid);
+//    DbgPrint("\t\tStart address - %p\n", GET_START_ADDRESS_THREAD(thread));
+//    DbgPrint("\t\tWin32 start address - %p\n\n", GET_WIN32_START_ADDRESS_THREAD(thread));
+//
+//    return;
+//}
 
 //----------------------------------------
-
 //
-// Отображает информацию о всех потоках процесса process.
-// Обходит двусвязный список потоков процесса.
+////
+//// Отображает информацию о всех потоках процесса process.
+//// Обходит двусвязный список потоков процесса.
+////
+//void ShowAllThreadProcess(PEPROCESS_T process){
 //
-void ShowAllThreadProcess(ULONG process){
-
-LIST_ENTRY *start;
-LIST_ENTRY *current;
-ULONG   thread;
-
-    // получаем указатель на заголовок очереди потоков процесса
-    start = GET_HEAD_THREAD_LIST(process);
-
-    // получаем указатель на элемент очереди, соответсвующий первому потоку
-    current = start->Flink;
-
-    // обходим список, пока не вернёмся к началу
-    do{
-        // получаем указатель на поток по элементу списка
-        thread = GET_THREAD_BY_LIST_ENTRY(current);
-
-        glTotalThread++;
-
-        // выводим информацию для очередного потока
-        InfoThread(thread);
-
-        // получаем указатель на следующий элемент
-        current = current->Flink;
-        }
-    while(current != start);
-
-    return;
-}
+//LIST_ENTRY *start;
+//LIST_ENTRY *current;
+//PETHREAD_T   thread;
+//
+//    // получаем указатель на заголовок очереди потоков процесса
+//    start = GET_HEAD_THREAD_LIST(process);
+//
+//    // получаем указатель на элемент очереди, соответсвующий первому потоку
+//    current = start->Flink;
+//
+//    // обходим список, пока не вернёмся к началу
+//    do{
+//        // получаем указатель на поток по элементу списка
+//        thread = GET_THREAD_BY_LIST_ENTRY(current);
+//
+//        glTotalThread++;
+//
+//        // выводим информацию для очередного потока
+//        InfoThread(thread);
+//
+//        // получаем указатель на следующий элемент
+//        current = current->Flink;
+//        }
+//    while(current != start);
+//
+//    return;
+//}
 
 //----------------------------------------

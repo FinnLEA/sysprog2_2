@@ -69,14 +69,14 @@ typedef struct _KSERVICE_TABLE_DESCRIPTOR {
 
 
 extern PKSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable;
-extern ULONG glHookCount;
+extern volatile ULONG glHookCount;
 
 
 //-----------------------------------------------
 
 ULONG ClearWP(void);
 void WriteCR0(ULONG reg);
-void WaitVar(ULONG* var);
+void WaitVar(volatile ULONG* var);
 
 
 //-----------------------------------------------

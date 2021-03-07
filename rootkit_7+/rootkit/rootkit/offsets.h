@@ -14,7 +14,7 @@ typedef ULONG	PROCESS_T;
 typedef ULONG	PETHREAD_T;
 #else
 typedef HANDLE		HANDLE_T;
-typedef PEPROCESS	PROCESS_T;
+typedef PEPROCESS	PEPROCESS_T;
 typedef PETHREAD	PETHREAD_T;
 #endif // DEBUG
 

