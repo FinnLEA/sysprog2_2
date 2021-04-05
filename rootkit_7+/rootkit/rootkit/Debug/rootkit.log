@@ -1,9 +1,9 @@
 ﻿  Building 'rootkit' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping Debug\rootkit.inf
-  Stamping [Version] section with DriverVer=03/07/2021,17.38.36.636
+  Stamping [Version] section with DriverVer=04/04/2021,16.46.28.259
   init.c
   process.c
-D:\Учеба\sysprog2\task\task2\sysprog2_2\rootkit_7+\rootkit\rootkit\process.c(43,128): warning C4047: ==: "HANDLE" отличается по уровням косвенного обращения от "int"
+  syscalls_work.c
   Создание кода...
   rootkit.vcxproj -> D:\Учеба\sysprog2\task\task2\sysprog2_2\rootkit_7+\rootkit\Debug\rootkit.sys
   Done Adding Additional Store

@@ -21,8 +21,8 @@ NT_QUERY_DIRECTORY_FILE glRealNtQueryDirectoryFile;
         EntryType *lastEntry = NULL;\
         PCHAR copyPosition = (PCHAR) listDirBuffer;\
         while (TRUE) {\
-            ULONG offset = currentEntry->NextEntryOffset;\
-            ULONG copySize;\
+            ULONG_PTR offset = currentEntry->NextEntryOffset;\
+            ULONG_PTR copySize;\
             if (offset == 0) {\
                 copySize = listDirSize - (copyPosition - listDirBuffer);\
             }\
@@ -71,7 +71,7 @@ NTSTATUS HookNtQueryDirectoryFile(
 	
 	NTSTATUS retStatus;
     PCHAR listDirBuffer;
-    ULONG newListDirLength;
+    ULONG_PTR newListDirLength;
 
 	InterlockedAdd(&((LONG)glHookCount), 1);
 

